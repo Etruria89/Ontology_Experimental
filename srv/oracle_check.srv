@@ -3,4 +3,4 @@ string what
 string where
 string id_number
 ----
-string response
+bool response
