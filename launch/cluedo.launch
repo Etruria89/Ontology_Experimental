@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- THIS BLOCK IS READY TO BE USED IN A NEW SIMULATION -->
+
+  <!-- these are the arguments you can pass this launch file, for example paused:=true -->
+  <!-- <arg name="model" default="$(find rt2_assignment1)/urdf/my_robot.urdf" /> -->
+
+  <!-- We resume the logic in empty_world.launch 
+   <include file="$(find gazebo_ros)/launch/empty_world.launch"> 
+    <arg name="paused" value="false"/>
+  </include> -->
+
+  <!-- Load the URDF into the ROS Parameter Server
+  <param name="robot_description" textfile="$(find rt2_assignment1)/urdf/my_robot.urdf"/> -->
+	 
+  <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
+  <!-- <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+	args="-urdf -model robot1 -param robot_description -z 0.05"/>  -->
+	
+  <!-- PARAMETERS FOR DUMMY NODES SIMULATION -->
+  
+  	<!-- Solution ID -->
+  	<arg name="solution_ID" default= "99999"/>	
+  
+  	<!-- Robot dummy pose -->
+    <arg name="robot_x" default= "0.0"/>
+    <arg name="robot_y" default= "0.0"/>
+    <arg name="robot_theta" default= "0.0"/>
+    
+    	<!-- Investigation time [s] -->
+     <arg name="ivest_time" default= "2.0"/>
+     
+     
+  <!-- SET PARAMETERS SERVER VALUES -->     
+    <param name="solution_ID" value="$(arg solution_ID)" />
+    <param name="robot_x" value="$(arg robot_x)" />
+    <param name="robot_y" value="$(arg robot_y)" />
+    <param name="robot_theta" value="$(arg robot_theta)" />
+    <param name="ivest_time" value="$(arg ivest_time)"/>
+
+
+   <!-- Run the armor node -->
+   <node pkg="armor" type="execute" name="armor_service" args="it.emarolab.armor.ARMORMainService"/> 
+   
+   <!-- Initialize the ontology -->
+   <node name="armor_init" pkg="cluedo_exp" type ="armor_init.py" output="screen" /> 
+   
+   <!-- Consistency checker server -->
+   <node name="Consistency_check_srv" pkg="cluedo_exp" type ="consistency_check.py" output="screen" />    
+   
+   <!-- Move_to action server -->
+   <!-- <node name="move_to" pkg="cluedo_exp" type ="move_to.py" output="screen" /> --> 
+	
+   <!-- FSM -->	
+   <node name="fsm" pkg="cluedo_exp" type ="fsm.py"  /> 
+
+   <!-- This node contain the server of the oracle -->   
+   <!-- <node name="oracle"  pkg="exprob_assignment1" type="oracle.py" /> -->
+   
+   <!-- This node handle the robot movement -->   
+   <!-- <node name="oracle"  pkg="exprob_assignment1" type="oracle.py" /> -->   
+   
+   <!-- This node handle the robot camera -->   
+   <!-- <node name="oracle"  pkg="exprob_assignment1" type="oracle.py" /> --> 
+
+      
+   <!-- <node name="userInterface" pkg="rt2_assignment1" type="user_interface.py" output="screen"/> -->
+   
+
+</launch>
