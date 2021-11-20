@@ -20,24 +20,37 @@
 	
   <!-- PARAMETERS FOR DUMMY NODES SIMULATION -->
   
-  	<!-- Solution ID -->
-  	<arg name="solution_ID" default= "99999"/>	
+     	<!-- Solution ID -->
+   <arg name="solution_ID" default= "99999"/>	 <!-- dummy value -->
+   
+   	<!-- Room Numbers -->
+   <arg name="room_number" default= "5"/>
   
   	<!-- Robot dummy pose -->
-    <arg name="robot_x" default= "0.0"/>
-    <arg name="robot_y" default= "0.0"/>
-    <arg name="robot_theta" default= "0.0"/>
+    <arg name="start_x" default= "0.0"/>
+    <arg name="start_y" default= "0.0"/>
+    <arg name="start_theta" default= "0.0"/>
     
     	<!-- Investigation time [s] -->
-     <arg name="ivest_time" default= "2.0"/>
+     <arg name="invest_time" default= "2.0"/>
      
-     
+    
   <!-- SET PARAMETERS SERVER VALUES -->     
     <param name="solution_ID" value="$(arg solution_ID)" />
-    <param name="robot_x" value="$(arg robot_x)" />
-    <param name="robot_y" value="$(arg robot_y)" />
-    <param name="robot_theta" value="$(arg robot_theta)" />
-    <param name="ivest_time" value="$(arg ivest_time)"/>
+    <param name="room_number" value="$(arg room_number)" />
+    <param name="start_x" value="$(arg start_x)" />
+    <param name="start_y" value="$(arg start_y)" />
+    <param name="start_theta" value="$(arg start_theta)" />
+    
+    <param name="invest_time" value="$(arg invest_time)"/>
+    
+    
+    
+   <!-- Support nodes -->
+   	<!-- Dummy camera -->
+   <node name="dummy_image" pkg="cluedo_exp" type ="DummyCam.py"/>
+        <!-- Dummy odometry -->
+   <node name="dummy_odom" pkg="cluedo_exp" type ="dummy_odom.py"/> 
 
 
    <!-- Run the armor node -->
@@ -46,23 +59,24 @@
    <!-- Initialize the ontology -->
    <node name="armor_init" pkg="cluedo_exp" type ="armor_init.py" output="screen" /> 
    
+   <!-- Dummy searche server -->
+   <node name="ImageProcess_srv" pkg="cluedo_exp" type ="ImageProcessingUnit.py"  />    
+   
+   <!-- Get ID of Hypothesis server -->
+   <node name="Get_ID_srv" pkg="cluedo_exp" type ="Get_Hyp_ID.py"  />  
+   
    <!-- Consistency checker server -->
-   <node name="Consistency_check_srv" pkg="cluedo_exp" type ="consistency_check.py" output="screen" />    
+   <node name="Consistency_check_srv" pkg="cluedo_exp" type ="consistency_check.py"  output="screen" />    
    
-   <!-- Move_to action server -->
-   <!-- <node name="move_to" pkg="cluedo_exp" type ="move_to.py" output="screen" /> --> 
+   <!-- Oracle query -->
+   <node name="Oracle_Query_srv" pkg="cluedo_exp" type ="Oracle_Query.py" output="screen" />   
+   
+   <!-- Move_to action server --> 
+   <node name="move_to" pkg="cluedo_exp" type ="move_to.py" output="screen" />  
 	
-   <!-- FSM -->	
-   <node name="fsm" pkg="cluedo_exp" type ="fsm.py"  /> 
+   <!-- Controller -->	
+   <node name="controller" pkg="cluedo_exp" type ="controller.py"  output="screen" />   
 
-   <!-- This node contain the server of the oracle -->   
-   <!-- <node name="oracle"  pkg="exprob_assignment1" type="oracle.py" /> -->
-   
-   <!-- This node handle the robot movement -->   
-   <!-- <node name="oracle"  pkg="exprob_assignment1" type="oracle.py" /> -->   
-   
-   <!-- This node handle the robot camera -->   
-   <!-- <node name="oracle"  pkg="exprob_assignment1" type="oracle.py" /> --> 
 
       
    <!-- <node name="userInterface" pkg="rt2_assignment1" type="user_interface.py" output="screen"/> -->

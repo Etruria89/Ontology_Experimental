@@ -1,10 +1,9 @@
 # goal
-float32 x
-float32 y
-float32 theta
+float32 target_x
+float32 target_y
 ---
 # result
 bool reached
 ---
-#feedback
+# feedback
 string status

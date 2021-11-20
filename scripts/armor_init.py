@@ -23,9 +23,9 @@ classes = ["PERSON", "PLACE", "WEAPON"]
 check_protege = "/root/ros_ws/src/cluedo_exp/ontology/check.owl"
 ontology_path ='/root/ros_ws/src/cluedo_exp/ontology/cluedo_ontology.owl'
 
-room_number = 6 
-
 armor_service = None
+
+room_number = rospy.get_param('room_number')
 
 # Initialize the entity list for ontology definition
 who_list = copy.deepcopy(who_list_full) 
@@ -53,6 +53,19 @@ def solution_upload(list_of_hints):
      add_entity(who, classes[0])
      add_entity(where, classes[1])
      add_entity(what, classes[2])
+     
+     # Create the only hypothesis
+     print("This is a spoil...")
+     print(list_of_hints)
+     time.sleep(5)
+     hypothesis = sorted([list_of_hints])
+                
+     # Generate the only possibe hypothesis
+     hypotesis_generator(hypothesis)
+        
+     sol_ID = "HP0"
+     rospy.set_param('solution_ID', sol_ID) 
+     print(sol_ID)
      
      # print("The killer is %s in the %s with the %s" %(who,  where, what))
      
@@ -145,11 +158,7 @@ def hypotesis_generator(hyp_list):
                 print('%s added to the class %s as %s!' % (element, hyp_string, hyp_classes))
         
             except:    
-                raise ValueError('Adding of %s in %s as %s failed!' % (element, hyp_string, hyp_classes))
-         
-            
-        #print(hyp) 
-        #print(hyp_classes)           
+                raise ValueError('Adding of %s in %s as %s failed!' % (element, hyp_string, hyp_classes))          
          
         hyp_count += 1
  
@@ -197,7 +206,12 @@ def main():
     
     armor_service = rospy.ServiceProxy('armor_interface_srv', ArmorDirective)
     
-    rospy.wait_for_service('armor_interface_srv') 
+    try:
+        rospy.wait_for_service('armor_interface_srv', timeout = 5)
+    except:
+        # The service is not avaialble, trigger the exception
+        rospy.signal_shutdown('Timeout has reachede; shutting down the armor_interface_srv cluient')
+        sys.exit(1) 
     
     # Load the ontology
     load_file(ontology_path)
@@ -275,7 +289,8 @@ def main():
         # Find solution ID
         for ID in range(0, len(hypothesis)):
              if list(hypothesis[ID]) == sorted(solution):  
-             	sol_ID = ID          	  
+             	sol_ID = "HP" + str(ID)    
+        print("This is another spoil...")      	  
         print(sol_ID) 
         rospy.set_param('solution_ID', sol_ID) 
     	

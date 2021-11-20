@@ -1,126 +1,116 @@
 #! /usr/bin/env python
 
 
+"""
+ go_to_point is a python script which provides the navigation part of the 
+ robot. 
+ 
+ """
+
 import rospy
-#from geometry_msgs.msg import Twist, Point
-#from nav_msgs.msg import Odometry
-#from tf import transformations
-#import math
 import actionlib
-import actionlib.msg
-import cluedo_exp.msg #this package
+from cluedo_exp.msg import Dummy_Odom
+import cluedo_exp.msg
+import time
+import random
 
 
+global start_position
 
-def change_state(state):
-    """
-    Update the current global state
-    Args: state (int):  new state
-    """
-    global state_
-    state_ = state
-    print ('State changed to [%s]' % state_)
 
-def done():
-    """
-    Stop the robot
-    Set the robot velocities to 0.
-    """
-    
-    print("Target reached!")
-    
-    print("Parameter server uopdated!")
-    #twist_msg = Twist()
-    #twist_msg.linear.x = 0
-    #twist_msg.angular.z = 0
-    #pub_.publish(twist_msg)
-    
-def stop_and_restart():
+action=None
 
-    """
-    Stop the robot
-    Set the robot velocities to 0.
-    """
-    
-    print("Target not reached, Teleported to the old position!")
-    #twist_msg = Twist()
-    #twist_msg.linear.x = 0
-    #twist_msg.angular.z = 0
-    #pub_.publish(twist_msg)
 
-    
-def move_to(goal):
+def clbk_odom(msg):
 
-    """
-    Set the appropriate behaviour depending
-    on the current robot state, in orderd
-    to reach the goal.
-    The state machine keeps running until
-    the goal is reached or the action is
-    preempted (the goal gets cancelled).
-    Args:
-      goal (PoseActionGoal): (x,y,theta) goal pose
-    """
-    global act_s
+    global start_position  
     
-    # get the current DUMMY position from the parameter server
-    old_x = rospy.get_param('robot_x')
-    old_y = rospy.get_param('robot_y')
-    old_theta = rospy.param('robot_theta')
-    
-    rate = rospy.Rate(20)
-    mission_complete = True
-    change_state(0)
+    start_position = [msg.x_pos, msg.y_pos]
 
-    feedback = cluedo_exp.msg.MoveFeedback()
-    result = cluedo_exp.msg.MoveResult()
+   
+def go_to_point(goal):
+
+    global action, start_position
     
-    target_reached = False
+    # Initialize feedback
+    feedback = cluedo_exp.msg.MoveFeedback() 
+    action_results = cluedo_exp.msg.MoveResult()   
+    # Initilize the success
+    success = False
+
+
+    desired_position = [goal.target_x, goal.target_y]
     
-    while not rospy.is_shutdown() and not reached:
+    try:
+        print("This is my starting position")
+        print(start_position)
+    except: 	
+        pass   
+    print("I am going to:")
+    print(desired_position)
     
-        if act_s.is_preempt_requested():
+    time.sleep(10)
+    
+    # Publish on the dummy odometry message
+    msg_odom = Dummy_Odom()
+    
+    msg_odom.x_pos = goal.target_x
+    msg_odom.y_pos = goal.target_y
+    
+    #Roll a dice to simulate a preemt request
+    rand_max = 50
+    preemp_probability =random.randint(1, rand_max)
+    
+    if preemp_probability == rand_max: 
+    	# Preempt the action
+        action.is_preempt_requested()
+        feedback.status = 'Goal was preempted'
+        action.set_preempted() 
+        success = False
+        print("PREEMPTED!!!!!!!!!!!!!!!")
+    else: 
+        # Check the position and go on
+        if (msg_odom.x_pos == goal.target_x) and (msg_odom.y_pos == goal.target_y):      
         
-            feedback.status = 'Goal was preempted'
-            act_s.set_preempted() # if we received the cancel we interrupt
-            mission_complete = False
-            stop_and_restart()
+            print("Arrived!")
+            success = True            
+            feedback.status = 'Goal reached'
             
-        else:
-            feedback.status = "Goal pose reached!"
-            done()
-            # Update parameter server with new DUMMY pose
-            rospy.set_param('robot_x', goal.x )
-            rospy.set_param('robot_y', goal.y)
-            rospy.set_param('robot_theta', goal.theta)
-            mission_complete = True
-                
-        #act_s.publish_feedback(feedback) # feedback published at every step
-
-        rate.sleep()
-        
-    if mission_complete:
-        result.reached = success
-        rospy.loginfo('Mission Complete!')
-        act_s.set_succeeded(result)
-
+            
+    # Check that the new position coincides with the goal
+    print("Final position check") 
+    print(msg_odom.x_pos, msg_odom.y_pos)
+    print(goal.target_x, goal.target_y)    
+  
+    # Publish feedback and results   
+    action.publish_feedback(feedback)
+    action_results.reached = success
+    print("Success status")
+    print(success)
+    
+    if success:
+        print("Setting success")
+        action.set_succeeded(action_results)                      
+    
+    return
 
 def main():
 
-    """
-    Main function to manage 
-    the robot behaviour
-    """
+    global action
     
-    global pub_, act_s
+    #Subscribe to the dummy odometry msg
+    odom_sub = rospy.Subscriber('dummy_odometry', Dummy_Odom, clbk_odom)
+    
+    # Action server
     rospy.init_node('move_to')
-    #pub_ = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
-    #sub_odom = rospy.Subscriber('/odom', Odometry, clbk_odom)
-    act_s = actionlib.SimpleActionServer(
-        '/move_to', cluedo_exp.msg.Move, move_to, auto_start=False) 
-    act_s.start()
+    action = actionlib.SimpleActionServer('/move_to', cluedo_exp.msg.MoveAction, execute_cb = go_to_point, auto_start=False)
+            
+    action.start()
     
     rospy.spin()
 
+
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except rospy.ROSInterruptException: pass  

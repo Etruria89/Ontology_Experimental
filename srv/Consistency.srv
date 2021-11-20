@@ -1,3 +1,6 @@
 string id_number
 ---
 bool consistent
+string who
+string what
+string where
